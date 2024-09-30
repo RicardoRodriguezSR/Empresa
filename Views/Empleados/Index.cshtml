@@ -1,0 +1,251 @@
+﻿
+@{
+    ViewBag.Title = "Empleados";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Empleados</h2>
+
+<p>
+    <button class="btn btn-success" id="btnNuevoEmpleado">Nuevo Empleado</button>
+</p>
+
+<div id="resultado"></div>
+
+<div class="modal fade" id="modalNuevoEmpleado" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Nuevo Empleado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevoEmpleado">
+                    <div class="mb-3">
+                        <label for="nombreEmpleado" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="nombreEmpleado" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edadEmpleado" class="form-label">Edad</label>
+                        <input type="number" class="form-control" id="edadEmpleado" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="correoEmpleado" class="form-label">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="correoEmpleado" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="areaEmpleado" class="form-label">Área</label>
+                        <select class="form-select" id="areaEmpleado" required>
+                            <option value="">Seleccione un área</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarEmpleado">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarEmpleado" tabindex="-1" aria-labelledby="modalEditarEmpleadoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEditarEmpleadoLabel">Editar Empleado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarEmpleado">
+                    <input type="hidden" id="editarEmpleadoID">
+                    <div class="mb-3">
+                        <label for="editarNombreEmpleado" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="editarNombreEmpleado" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editarEdadEmpleado" class="form-label">Edad</label>
+                        <input type="number" class="form-control" id="editarEdadEmpleado" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editarCorreoEmpleado" class="form-label">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="editarCorreoEmpleado" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editarAreaEmpleado" class="form-label">Área</label>
+                        <select class="form-select" id="editarAreaEmpleado" required>
+                            <option value="">Seleccione un área</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" id="btnActualizarEmpleado" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+
+        cargarEmpleados();
+
+        function cargarEmpleados() {
+            $.ajax({
+                url: '/Empleados/GetEmpleados',
+                method: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    let html = '<table class="table">'
+                    html += `<tr>
+                        <th>Nombre</th>
+                        <th>Edad</th>
+                        <th>Correo</th>
+                        <th>Area</th>
+                        <th>Acciones</th>
+                    </tr>`
+                    $.each(response, function (index, Empleado) {
+                        html += `<tr>
+                            <td>${Empleado.NombreEmpleado}</td>
+                            <td>${Empleado.Edad}</td>
+                            <td>${Empleado.CorreoElectronico}</td>
+                            <td>${Empleado.NombreArea}</td>
+                            <td>
+                                <button class="btn btn-primary btnEditarEmpleado" data-id="${Empleado.EmpleadoID}">Editar</button>
+                                <button class="btn btn-danger btnEliminarEmpleado" data-id="${Empleado.EmpleadoID}">Eliminar</button>
+                            </td>
+                        </tr>`
+                    });
+                    html += '</table>'
+
+                    $('#resultado').html(html);
+                },
+                error: function (error) {
+                    console.error("Error en la solicitud", error);
+                }
+            });
+        }
+
+        $('#btnNuevoEmpleado').click(function () {
+            cargarAreasSelect('#areaEmpleado');
+            $('#modalNuevoEmpleado').modal('show');
+        });
+
+        function cargarAreasSelect(selector) {
+            $.ajax({
+                url: '/Empleados/GetAreas',
+                method: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    let opciones = '<option value="">Seleccione un área</option>';
+                    $.each(response, function (index, area) {
+                        opciones += `<option value="${area.AreaID}">${area.NombreArea}</option>`;
+                    });
+                    $(selector).html(opciones);
+                },
+                error: function (error) {
+                    console.error("Error al cargar las áreas", error);
+                }
+            });
+        }
+
+        $('#btnGuardarEmpleado').click(function () {
+            const empleado = {
+                NombreEmpleado: $('#nombreEmpleado').val(),
+                Edad: $('#edadEmpleado').val(),
+                CorreoElectronico: $('#correoEmpleado').val(),
+                AreaID: $('#areaEmpleado').val()
+            };
+
+            $.ajax({
+                url: '/Empleados/CrearEmpleado',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(empleado),
+                success: function (response) {
+                    $('#modalNuevoEmpleado').modal('hide');
+                    $('#formNuevoEmpleado')[0].reset();
+                    cargarEmpleados();
+                },
+                error: function (error) {
+                    console.error("Error al crear el empleado", error);
+                }
+            });
+        });
+
+        $(document).on('click', '.btnEditarEmpleado', function () {
+            const empleadoID = $(this).data('id');
+
+            $.ajax({
+                url: '/Empleados/GetEmpleado',
+                method: 'GET',
+                data: { empleadoID: empleadoID },
+                dataType: 'json',
+                success: function (response) {
+                    $('#editarEmpleadoID').val(response.EmpleadoID);
+                    $('#editarNombreEmpleado').val(response.NombreEmpleado);
+                    $('#editarEdadEmpleado').val(response.Edad);
+                    $('#editarCorreoEmpleado').val(response.CorreoElectronico);
+
+                    cargarAreasSelect('#editarAreaEmpleado');
+                    $('#editarAreaEmpleado').val(response.AreaID);
+                    $('#modalEditarEmpleado').modal('show');
+                },
+                error: function (error) {
+                    console.error("Error al cargar los datos del empleado", error);
+                }
+            });
+        });
+
+        $('#btnActualizarEmpleado').click(function () {
+            const empleado = {
+                EmpleadoID: $('#editarEmpleadoID').val(),
+                NombreEmpleado: $('#editarNombreEmpleado').val(),
+                Edad: $('#editarEdadEmpleado').val(),
+                CorreoElectronico: $('#editarCorreoEmpleado').val(),
+                AreaID: $('#editarAreaEmpleado').val()
+            };
+
+            $.ajax({
+                url: '/Empleados/ActualizarEmpleado',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(empleado),
+                success: function (response) {
+                    if (response.success) {
+                        $('#modalEditarEmpleado').modal('hide');
+
+                        cargarEmpleados();
+                    } else {
+                        console.error(response.message);
+                    }
+                },
+                error: function (error) {
+                    console.error("Error al actualizar el empleado", error);
+                }
+            });
+        });
+
+        $(document).on('click', '.btnEliminarEmpleado', function () {
+            const empleadoID = $(this).data('id');
+
+            if (confirm("¿Estás seguro de que deseas eliminar este empleado?")) {
+                $.ajax({
+                    url: '/Empleados/EliminarEmpleado',
+                    method: 'POST',
+                    data: { empleadoID: empleadoID },
+                    success: function (response) {
+                        cargarEmpleados();
+                    },
+                    error: function (error) {
+                        console.error("Error al eliminar el empleado", error);
+                    }
+                });
+            }
+        });
+    });
+</script>
